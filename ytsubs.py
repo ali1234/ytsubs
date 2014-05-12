@@ -74,32 +74,52 @@ def get_playlists(channel):
 
     return playlists
 
-def get_videos(playlist):
+def get_playlist_items(playlist):
     videos = []
 
     if playlist:
         # get the last 5 videos uploaded to the playlist
-        url = baseurl + '/playlistItems?part=snippet&playlistId='+ playlist + '&maxResults=5&key=' + my_key
+        url = baseurl + '/playlistItems?part=contentDetails&playlistId='+ playlist + '&maxResults=5&key=' + my_key
         response = urllib2.urlopen(url)
         data = json.load(response)    
         for i in data['items']:
             if i['kind'] == 'youtube#playlistItem':
-                videos.append(i['snippet'])
+                videos.append(i['contentDetails']['videoId'])
 
     return videos
+
+def get_real_videos(video_ids):
+    videos = []
+    purl = baseurl + '/videos?part=snippet&id='+ '%2C'.join(video_ids) + '&maxResults=50&key=' + my_key
+    response = urllib2.urlopen(purl)
+    data = json.load(response)
+
+    return data['items']
+
+def chunks(l, n):
+    """ Yield successive n-sized chunks from l.
+    """
+    for i in xrange(0, len(l), n):
+        yield l[i:i+n]
 
 username = sys.argv[1]
 
 # get all upload playlists of subbed channels
 playlists = get_playlists(get_channel_for_user(username))
 
-# get the last 5 videos from every playlist
-allvids = []
+# get the last 5 items from every playlist
+allitems = []
 for p in playlists:
-    allvids.extend(get_videos(p))
+    allitems.extend(get_playlist_items(p))
+
+# the playlist items don't contain the correct published date, so now
+# we have to fetch every video in batches of 50.
+allvids = []
+for chunk in chunks(allitems, 50):
+    allvids.extend(get_real_videos(chunk))
 
 # sort them by date
-sortedvids = sorted(allvids, key=lambda k: k['publishedAt'], reverse=True)
+sortedvids = sorted(allvids, key=lambda k: k['snippet']['publishedAt'], reverse=True)
 
 
 # build the rss
@@ -115,11 +135,11 @@ link.text = 'http://www.youtube.com/'
 for v in sortedvids[:20]:
     item = SubElement(channel, 'item')
     title = SubElement(item, 'title')
-    title.text = v['title']
+    title.text = v['snippet']['title']
     link = SubElement(item, 'link')
-    link.text = 'http://youtube.com/watch?v=' + v['resourceId']['videoId']
+    link.text = 'http://youtube.com/watch?v=' + v['id']
     description = SubElement(item, 'description')
-    description.text = v['description']
+    description.text = v['snippet']['description']
 
 f = open(sys.argv[2], 'w')
 f.write('<?xml version="1.0" encoding="UTF-8" ?>')

@@ -23,9 +23,12 @@ of any user who hasn't set their account to private.
 The V3 API is incredibly inefficient at getting this information.
 The script will make 2 API calls for every 50 subscriptions you have
 and then it will make another API call for each subscription to get
-the actual videos. If you have 100 subscriptions this script will use
+the actual videos - THEN it makes another API call for each 50 videos
+to get the real publication time.
+
+If you have 100 subscriptions this script will use
 around 500 API "units" each time you call it. You are allowed to use
-50,000,000 units per day so this you should not run into the limits
+50,000,000 units per day so you should not run into the limits
 if you are only updating hourly, even if you have thousands of subs.
 
 Note that due to a bug in Firefox, you can't directly open the output
