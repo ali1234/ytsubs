@@ -1,0 +1,36 @@
+This python script will fetch the latest subscription videos for a 
+named Youtube user. Usage:
+
+./ytsubs.py <username> <output RSS file>
+
+I recommend to put this into a cronjob so that it will only update
+hourly due to the extreme inefficiency of the V3 API (see below).
+
+The script uses the Youtube V3 API which requires you to create an 
+application on the Google developer console before you can make 
+requests. After you make the application you must enable Youtube API 
+access and create a server API key.
+
+This is all explained here:
+
+https://developers.google.com/youtube/registering_an_application
+
+After you get your API key, put it into the python file. Note that
+the API key owner does not need to be the same user you want to get
+subscription videos for. The API allows you to read subscriptions
+of any user who hasn't set their account to private.
+
+The V3 API is incredibly inefficient at getting this information.
+The script will make 2 API calls for every 50 subscriptions you have
+and then it will make another API call for each subscription to get
+the actual videos. If you have 100 subscriptions this script will use
+around 500 API "units" each time you call it. You are allowed to use
+50,000,000 units per day so this you should not run into the limits
+if you are only updating hourly, even if you have thousands of subs.
+
+Note that due to a bug in Firefox, you can't directly open the output
+file with a file:// URL and create a live bookmark. You have to serve
+it on http:// or you won't get this option. You can of course run a
+tiny local webserver for this purpose.
+
+See: https://bugzilla.mozilla.org/show_bug.cgi?id=1008788
