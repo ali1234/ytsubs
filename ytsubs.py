@@ -138,6 +138,13 @@ for v in sortedvids[:20]:
     title.text = v['snippet']['title']
     link = SubElement(item, 'link')
     link.text = 'http://youtube.com/watch?v=' + v['id']
+    author = SubElement(item, 'author')
+    author.text = v['snippet']['channelTitle']
+    guid = SubElement(item, 'guid')
+    guid.attrib['isPermaLink'] = 'true'
+    guid.text = 'http://youtube.com/watch?v=' + v['id']
+    pubDate = SubElement(item, 'pubDate')
+    pubDate.text = v['snippet']['publishedAt']
     description = SubElement(item, 'description')
     description.text = v['snippet']['description']
 
