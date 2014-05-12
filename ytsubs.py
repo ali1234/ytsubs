@@ -123,6 +123,6 @@ for v in sortedvids[:20]:
 
 f = open(sys.argv[2], 'w')
 f.write('<?xml version="1.0" encoding="UTF-8" ?>')
-f.write(tostring(rss))
+f.write(tostring(rss).encode('utf-8'))
 f.close()
 
