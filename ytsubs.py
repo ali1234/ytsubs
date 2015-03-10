@@ -26,11 +26,21 @@
 import urllib2
 import json
 import itertools
+import os
 import sys
 from xml.etree.ElementTree import Element, SubElement, Comment, tostring
 
 baseurl = 'https://www.googleapis.com/youtube/v3'
-my_key = 'youtube secret server key'
+my_key = os.environ.get('YOUTUBE_SERVER_API_KEY')
+
+# check for missing inputs
+if not my_key:
+  print "YOUTUBE_SERVER_API_KEY variable missing."
+  sys.exit(-1)
+
+if not len(sys.argv) >= 2:
+  print "username and (optionally) destination file must be specified as first and second arguments."
+  sys.exit(-1)
 
 def get_channel_for_user(user):
     url = baseurl + '/channels?part=id&forUsername='+ user + '&key=' + my_key
@@ -148,7 +158,11 @@ for v in sortedvids[:20]:
     description = SubElement(item, 'description')
     description.text = v['snippet']['description']
 
-f = open(sys.argv[2], 'w')
+if len(sys.argv) >= 3:
+  filename = sys.argv[2]
+  f = open(filename, 'w')
+else:
+  f = sys.stdout
 f.write('<?xml version="1.0" encoding="UTF-8" ?>')
 f.write(tostring(rss).encode('utf-8'))
 f.close()
