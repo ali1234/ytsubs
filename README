@@ -1,21 +1,21 @@
 This python script will fetch the latest subscription videos for a 
 named Youtube user. Usage:
 
-./ytsubs.py <username> <output RSS file>
+    YOUTUBE_SERVER_API_KEY="<your_secret_key>" ./ytsubs.py <username> <output RSS file>
 
 I recommend to put this into a cronjob so that it will only update
 hourly due to the extreme inefficiency of the V3 API (see below).
 
 The script uses the Youtube V3 API which requires you to create an 
 application on the Google developer console before you can make 
-requests. After you make the application you must enable Youtube API 
-access and create a server API key.
+requests. After you make the application you must enable
+'YouTube Data API v3' access and create a server API key.
 
 This is all explained here:
 
 https://developers.google.com/youtube/registering_an_application
 
-After you get your API key, put it into the python file. Note that
+After you get your API key, add it to the command above. Note that
 the API key owner does not need to be the same user you want to get
 subscription videos for. The API allows you to read subscriptions
 of any user who hasn't set their account to private.
