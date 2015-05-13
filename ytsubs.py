@@ -112,58 +112,73 @@ def chunks(l, n):
     for i in xrange(0, len(l), n):
         yield l[i:i+n]
 
-username = sys.argv[1]
+def do_it():
 
-# get all upload playlists of subbed channels
-playlists = get_playlists(get_channel_for_user(username))
+    username = sys.argv[1]
 
-# get the last 5 items from every playlist
-allitems = []
-for p in playlists:
-    allitems.extend(get_playlist_items(p))
+    # get all upload playlists of subbed channels
+    playlists = get_playlists(get_channel_for_user(username))
 
-# the playlist items don't contain the correct published date, so now
-# we have to fetch every video in batches of 50.
-allvids = []
-for chunk in chunks(allitems, 50):
-    allvids.extend(get_real_videos(chunk))
+    # get the last 5 items from every playlist
+    allitems = []
+    for p in playlists:
+        allitems.extend(get_playlist_items(p))
 
-# sort them by date
-sortedvids = sorted(allvids, key=lambda k: k['snippet']['publishedAt'], reverse=True)
+    # the playlist items don't contain the correct published date, so now
+    # we have to fetch every video in batches of 50.
+    allvids = []
+    for chunk in chunks(allitems, 50):
+        allvids.extend(get_real_videos(chunk))
+
+    # sort them by date
+    sortedvids = sorted(allvids, key=lambda k: k['snippet']['publishedAt'], reverse=True)
 
 
-# build the rss
-rss = Element('rss')
-rss.attrib['version'] = '2.0'
-channel = SubElement(rss, 'channel')
-title = SubElement(channel, 'title')
-title.text = 'Youtube subscriptions for ' + username
-link = SubElement(channel, 'link')
-link.text = 'http://www.youtube.com/'
+    # build the rss
+    rss = Element('rss')
+    rss.attrib['version'] = '2.0'
+    channel = SubElement(rss, 'channel')
+    title = SubElement(channel, 'title')
+    title.text = 'Youtube subscriptions for ' + username
+    link = SubElement(channel, 'link')
+    link.text = 'http://www.youtube.com/'
 
-# add the most recent 20
-for v in sortedvids[:20]:
-    item = SubElement(channel, 'item')
-    title = SubElement(item, 'title')
-    title.text = v['snippet']['title']
-    link = SubElement(item, 'link')
-    link.text = 'http://youtube.com/watch?v=' + v['id']
-    author = SubElement(item, 'author')
-    author.text = v['snippet']['channelTitle']
-    guid = SubElement(item, 'guid')
-    guid.attrib['isPermaLink'] = 'true'
-    guid.text = 'http://youtube.com/watch?v=' + v['id']
-    pubDate = SubElement(item, 'pubDate')
-    pubDate.text = v['snippet']['publishedAt']
-    description = SubElement(item, 'description')
-    description.text = v['snippet']['description']
+    # add the most recent 20
+    for v in sortedvids[:20]:
+        item = SubElement(channel, 'item')
+        title = SubElement(item, 'title')
+        title.text = v['snippet']['title']
+        link = SubElement(item, 'link')
+        link.text = 'http://youtube.com/watch?v=' + v['id']
+        author = SubElement(item, 'author')
+        author.text = v['snippet']['channelTitle']
+        guid = SubElement(item, 'guid')
+        guid.attrib['isPermaLink'] = 'true'
+        guid.text = 'http://youtube.com/watch?v=' + v['id']
+        pubDate = SubElement(item, 'pubDate')
+        pubDate.text = v['snippet']['publishedAt']
+        description = SubElement(item, 'description')
+        description.text = v['snippet']['description']
 
-if len(sys.argv) >= 3:
-  filename = sys.argv[2]
-  f = open(filename, 'w')
-else:
-  f = sys.stdout
-f.write('<?xml version="1.0" encoding="UTF-8" ?>')
-f.write(tostring(rss).encode('utf-8'))
-f.close()
+    if len(sys.argv) >= 3:
+        filename = sys.argv[2]
+        f = open(filename, 'w')
+    else:
+        f = sys.stdout
+
+    f.write('<?xml version="1.0" encoding="UTF-8" ?>')
+    f.write(tostring(rss).encode('utf-8'))
+    f.close()
+
+
+
+if __name__ == '__main__':
+    for i in range(3):
+        try:
+            do_it()
+        except urllib2.HTTPError, error:
+            if error.code == 500:
+                continue
+            raise error
+        break
 
