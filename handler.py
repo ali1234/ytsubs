@@ -1,4 +1,3 @@
-#!C:\Anaconda\python.exe -u
 # coding=utf-8
 
 # Copyright (C) 2015 Daniel Schäfer <ds@struckmeierfliesen.de>
@@ -26,7 +25,6 @@
 
 import os
 from xml.dom import minidom
-import sys
 from xml.etree.ElementTree import Element, SubElement, tostring
 from fetcher import Fetcher
 import cPickle
@@ -171,8 +169,4 @@ class Handler:
 
         reload_button = SubElement(body, 'a', {'href': '?', 'class': 'block_clear'})
         reload_button.text = 'Reload'
-        f = sys.stdout
-        f.write("Content-type:text/html\r\n\r\n")
-        f.write('<!DOCTYPE html>')
-        xmlstr = minidom.parseString(tostring(html)).toprettyxml(indent="   ")
-        f.write(xmlstr.encode('utf-8'))
+        return minidom.parseString(tostring(html)).toprettyxml(indent="   ").encode('utf-8')

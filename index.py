@@ -27,6 +27,7 @@
 import cgi
 import cgitb
 from handler import Handler
+import sys
 
 cgitb.enable()
 directory = "c:/xampp/htdocs/ytsubs/"
@@ -38,7 +39,13 @@ handling = Handler(directory, api_key, username)
 handling.add_to_watched(form.getvalue('watched'))
 handling.add_own_video(form.getvalue('add_video'))
 handling.load_videos(False)
-handling.build_html()
+xmlstr = handling.build_html()
+
+f = sys.stdout
+f.write("Content-type:text/html\r\n\r\n")
+f.write('<!DOCTYPE html>')
+f.write(xmlstr)
+
 if not form.getvalue('watched'):
     handling.load_videos(True)
     print 'Refresh the page to see new videos.'

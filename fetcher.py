@@ -1,4 +1,3 @@
-#!C:\Anaconda\python.exe -u
 # coding=utf-8
 
 # Copyright (C) 2014 Alistair Buxton <a.j.buxton@gmail.com>

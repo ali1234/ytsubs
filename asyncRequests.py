@@ -1,4 +1,3 @@
-#!C:\Anaconda\python.exe -u
 # coding=utf-8
 
 import urllib2
