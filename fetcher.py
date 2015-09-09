@@ -48,7 +48,7 @@ class Fetcher:
         except:
             raise InputDataIncorrect('Something went wrong - most likely the API-Key is invalid.')
 
-        data = json.load(response)
+        data = self._load_json(response)
 
         try:
             return data['items'][0]['id']
@@ -66,7 +66,7 @@ class Fetcher:
             # We are limited to 50 results. If the user subscribed to more than 50 channels
             # we have to make multiple requests here which can only be fetched one after another.
             response = urllib2.urlopen(url+next_page)
-            data = json.load(response)
+            data = self._load_json(response)
             subs = []
             for i in data['items']:
                 if i['kind'] == 'youtube#subscription':
@@ -87,7 +87,7 @@ class Fetcher:
             request.run(urls)
             results = request.results
         for response in results:
-            data2 = json.load(response)
+            data2 = self._load_json(response)
             for i in data2['items']:
                 try:
                     playlists.append(i['contentDetails']['relatedPlaylists']['uploads'])
@@ -108,7 +108,7 @@ class Fetcher:
             results = request.results
         videos = []
         for response in results:
-            data = json.load(response)
+            data = self._load_json(response)
             for i in data['items']:
                 if i['kind'] == 'youtube#playlistItem':
                     videos.append(i['contentDetails']['videoId'])
@@ -125,7 +125,7 @@ class Fetcher:
             request.run(urls)
             results = request.results
         for response in results:
-            data = json.load(response)
+            data = self._load_json(response)
             videos.extend(data['items'])
         return videos
 
@@ -134,6 +134,13 @@ class Fetcher:
         # Yield successive n-sized chunks from l.
         for i in xrange(0, len(l), n):
             yield l[i:i+n]
+
+    @staticmethod
+    def _load_json(input):
+        if isinstance(input, basestring):
+            return json.loads(input)
+        else:
+            return json.load(input)
 
     def do_it(self):
         # Get all upload playlists of subbed channels
@@ -153,6 +160,6 @@ class Fetcher:
     def query_video_information(self, video_id):
         url = self.baseurl + '/videos?part=snippet&id=' + video_id + '&key=' + self.API_KEY
         response = urllib2.urlopen(url)
-        data = json.load(response)
+        data = self._load_json(response)
 
         return data['items'][0]
