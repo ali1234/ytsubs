@@ -37,9 +37,9 @@ class Handler:
         self.USERNAME = username
 
         self.DIRECTORY = directory
-        self.WATCHED_PATH = os.path.normpath(self.DIRECTORY + 'watchedVids.txt')
-        self.RAW_PATH = os.path.normpath(self.DIRECTORY + 'rawData.txt')
-        self.ADDITIONS_PATH = os.path.normpath(self.DIRECTORY + 'ownAdditions.txt')
+        self.WATCHED_PATH = os.path.normpath(self.DIRECTORY + self.USERNAME.lower() + '_watchedVids.txt')
+        self.RAW_PATH = os.path.normpath(self.DIRECTORY + self.USERNAME.lower() + '_rawData.txt')
+        self.ADDITIONS_PATH = os.path.normpath(self.DIRECTORY + self.USERNAME.lower() + '_ownAdditions.txt')
 
         self.fetcher = Fetcher(self.USERNAME, self.API_KEY)
         self.watched = self._get_watched_list()
@@ -53,7 +53,7 @@ class Handler:
         except EOFError:
             return []
         except IOError:
-            open(self.WATCHED_PATH, 'w').close()
+            open(self.WATCHED_PATH, 'wb').close()
             return []
 
     def add_to_watched(self, addition):
@@ -95,7 +95,7 @@ class Handler:
         except EOFError:
             return []
         except IOError:
-            open(self.ADDITIONS_PATH, 'w').close()
+            open(self.ADDITIONS_PATH, 'wb').close()
             return []
 
     def add_own_video(self, addition):
@@ -164,9 +164,9 @@ class Handler:
             uploader = SubElement(container, 'span')
             uploader.text = v['snippet']['channelTitle']
 
-            mark_watched = SubElement(container, 'a', {'href': '?watched=' + v['id'], 'class': 'watched'})
+            mark_watched = SubElement(container, 'a', {'href': '?watched=' + v['id'] + '&user=' + self.USERNAME, 'class': 'watched'})
             mark_watched.text = 'watched'
 
-        reload_button = SubElement(body, 'a', {'href': '?', 'class': 'block_clear'})
+        reload_button = SubElement(body, 'a', {'href': '?user=' + self.USERNAME, 'class': 'block_clear'})
         reload_button.text = 'Reload'
         return minidom.parseString(tostring(html)).toprettyxml(indent="   ").encode('utf-8')

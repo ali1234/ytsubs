@@ -28,13 +28,16 @@ import cgi
 import cgitb
 from handler import Handler
 import sys
+from fetcher import InputDataIncorrect
 
 cgitb.enable()
 directory = "c:/xampp/htdocs/ytsubs/"
 api_key = 'YOUR_API_KEY'
-username = 'YOUR_USERNAME'
 
 form = cgi.FieldStorage()
+username = form.getvalue('user')
+if not username:
+    raise InputDataIncorrect('Specify the username with the \'user\' GET attribute.')
 handling = Handler(directory, api_key, username)
 handling.add_to_watched(form.getvalue('watched'))
 handling.add_own_video(form.getvalue('add_video'))
