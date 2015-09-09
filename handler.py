@@ -22,7 +22,7 @@
 # OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 # OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
+from datetime import datetime
 import os
 from xml.dom import minidom
 from xml.etree.ElementTree import Element, SubElement, tostring
@@ -146,9 +146,13 @@ class Handler:
             error_message = SubElement(body, 'h2')
             error_message.text = 'No videos were saved - new ones are being loaded.'
 
-        for v in self.sortedvids[:50]:
-            if v['id'] in self.watched:
-                continue
+        self.sortedvids = [v for v in self.sortedvids if v['id'] not in self.watched]
+        i = 0
+        for v in self.sortedvids:
+            i+=1
+            published_date = datetime.strptime(v['snippet']['publishedAt'], "%Y-%m-%dT%H:%M:%S.000Z")
+            if (datetime.now() - published_date).days > 7 or i > 50:
+                break
             video_title = v['snippet']['title']
             container = SubElement(body, 'div', {'class': 'container'})
 
