@@ -26,8 +26,8 @@
 
 import cgi
 import cgitb
-from handler import Handler
 import sys
+from handler import Handler
 from fetcher import InputDataIncorrect
 
 cgitb.enable()
@@ -40,8 +40,7 @@ if not username:
     raise InputDataIncorrect('Specify the username with the \'user\' GET attribute.')
 handling = Handler(directory, api_key, username)
 handling.add_to_watched(form.getvalue('watched'))
-handling.add_own_video(form.getvalue('add_video'))
-handling.load_videos(False)
+handling.add_video(form.getvalue('add_video'))
 xmlstr = handling.build_html()
 
 f = sys.stdout
@@ -50,5 +49,5 @@ f.write('<!DOCTYPE html>')
 f.write(xmlstr)
 
 if not form.getvalue('watched'):
-    handling.load_videos(True)
+    handling.update_videos(True)
     print 'Refresh the page to see new videos.'

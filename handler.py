@@ -42,19 +42,25 @@ class Handler:
         self.ADDITIONS_PATH = os.path.normpath(self.DIRECTORY + self.USERNAME.lower() + '_ownAdditions.txt')
 
         self.fetcher = Fetcher(self.USERNAME, self.API_KEY)
-        self.watched = self._get_watched_list()
-        self.sortedvids = []
 
+        self.watched = []
+        self._get_watched()
 
-    def _get_watched_list(self):
+        self.additions = []
+        self._get_additions()
+
+        self.raw_videos = []
+        self._get_vids(False)
+
+    def _get_watched(self):
         try:
             with open(self.WATCHED_PATH, 'r') as watchedFile:
-                return cPickle.load(watchedFile)
+                self.watched = cPickle.load(watchedFile)
         except EOFError:
-            return []
+            self.watched = []
         except IOError:
             open(self.WATCHED_PATH, 'wb').close()
-            return []
+            self.watched = []
 
     def add_to_watched(self, addition):
         if addition is None:
@@ -64,7 +70,7 @@ class Handler:
         with open(self.WATCHED_PATH, 'w') as watchedFile:
             cPickle.dump(self.watched, watchedFile)
         # A video marked as watched can safely be deleted from the local 'own additions'.
-        self._remove_from_own_additions(addition)
+        self._remove_from_additions(addition)
 
     def _remove_from_watched(self, removal):
         if removal in self.watched:
@@ -76,7 +82,7 @@ class Handler:
         try:
             with open(self.RAW_PATH, 'r') as rawFile:
                 videos = cPickle.load(rawFile)
-        except:
+        except IOError:
             videos = []
 
         if reload:
@@ -84,42 +90,43 @@ class Handler:
             if videos:
                 with open(self.RAW_PATH, 'w') as rawFile:
                     cPickle.dump(videos, rawFile)
-        return videos
+        self.raw_videos = videos
 
-    def get_own_additions(self):
+    def _get_additions(self):
         try:
             with open(self.ADDITIONS_PATH, 'r') as additionFile:
                 ids = [line.strip() for line in additionFile]
-            additions = [self.fetcher.query_video_information(video_id) for video_id in ids]
-            return additions
+            self.additions = [self.fetcher.query_video_information(video_id) for video_id in ids] # TODO parallelize
         except EOFError:
-            return []
+            self.additions = []
         except IOError:
             open(self.ADDITIONS_PATH, 'wb').close()
-            return []
+            self.additions = []
 
-    def add_own_video(self, addition):
+    # Adds a video with the id 'addition'
+    def add_video(self, addition):
         # Write each video id in a separate line in a file
-        if addition is None:
-            return
-        with open(self.ADDITIONS_PATH, 'a') as additionFile:
-            additionFile.write(addition + os.linesep)
-        # This ensures added videos to show up even if they have previously been marked as watched.
-        self._remove_from_watched(addition)
+        if addition is not None and addition not in [add['id'] for add in self.additions]:
+            self.additions.append(self.fetcher.query_video_information(addition))
+            with open(self.ADDITIONS_PATH, 'a') as additionFile:
+                additionFile.write(addition + os.linesep)
+            # This ensures added videos to show up even if they have previously been marked as watched.
+            self._remove_from_watched(addition)
 
-    def _remove_from_own_additions(self, removal):
-        additions = self.get_own_additions()
+    def _remove_from_additions(self, removal):
         # Check if the id for the video to be removed is in the 'own additions'.
-        if removal in [i['id'] for i in additions]:
+        if removal in [i['id'] for i in self.additions]:
             # Actually remove it from the list.
-            additions = [i for i in additions if not i['id'] == removal]
+            self.additions = [i for i in self.additions if not i['id'] == removal]
             with open(self.ADDITIONS_PATH, 'w') as additionFile:
-                for vid in additions:
+                for vid in self.additions:
                     if len(vid['id']) > 0:
                         additionFile.write("%s\n" % vid['id'])
 
-    def load_videos(self, reload):
-        self.sortedvids = self.get_own_additions() + self._get_vids(reload)
+    def update_videos(self, reload):
+        self._get_watched()
+        self._get_additions()
+        self._get_vids(reload)
 
     def build_html(self):
         # Display the videos in a format similar to the YouTube feed.
@@ -143,13 +150,14 @@ class Handler:
         hidden = SubElement(add_form, 'input', {'type': 'hidden', 'name': 'user', 'value': self.USERNAME})
         submit = SubElement(add_form, 'input', {'type': 'submit', 'value': 'Add'})
 
-        if not self.sortedvids:
+        all_videos = self.additions + self.raw_videos
+        if not all_videos:
             error_message = SubElement(body, 'h2')
             error_message.text = 'No videos were saved - new ones are being loaded.'
 
-        self.sortedvids = [v for v in self.sortedvids if v['id'] not in self.watched]
+        all_videos = [v for v in all_videos if v['id'] not in self.watched]
         i = 0
-        for v in self.sortedvids:
+        for v in all_videos:
             i+=1
             published_date = datetime.strptime(v['snippet']['publishedAt'], "%Y-%m-%dT%H:%M:%S.000Z")
             if (datetime.now() - published_date).days > 7 or i > 50:
