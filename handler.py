@@ -140,6 +140,7 @@ class Handler:
         header = SubElement(body, 'div', {'id': 'header'})
         add_form = SubElement(header, 'form', {'method': 'get'})
         input = SubElement(add_form, 'input', {'type': 'text', 'name': 'add_video', 'placeholder': 'Enter video URL'})
+        hidden = SubElement(add_form, 'input', {'type': 'hidden', 'name': 'user', 'value': self.USERNAME})
         submit = SubElement(add_form, 'input', {'type': 'submit', 'value': 'Add'})
 
         if not self.sortedvids:
