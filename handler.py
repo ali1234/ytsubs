@@ -33,13 +33,14 @@ import json
 
 class Handler:
 
-    def __init__(self, directory, api_key, username):
+    def __init__(self, directory, api_key, username, max_vids):
         self.API_KEY = api_key
         self.USERNAME = username
 
         self.SAVE_FILE_PATH = os.path.normpath(directory + 'ytsubs_' + self.USERNAME.lower() + '.json')
         self.fetcher = Fetcher(self.USERNAME, self.API_KEY)
 
+        self.MAX_VIDEOS = max_vids
         self.watched = []
         self.additions = []
         self.raw_videos = []
@@ -112,7 +113,7 @@ class Handler:
                 video['id'] = id
                 data['watched'].append(video)
 
-        for type, list in {'additions': self.additions, 'raw_videos': [vid for vid in self.raw_videos if vid['id'] not in self.watched][:50]}.iteritems():
+        for type, list in {'additions': self.additions, 'raw_videos': [vid for vid in self.raw_videos if vid['id'] not in self.watched][:self.MAX_VIDEOS]}.iteritems():
             data[type] = []
             for addition in list:
                 video = {}
@@ -160,7 +161,8 @@ class Handler:
         for v in all_videos:
             i+=1
             published_date = datetime.strptime(v['snippet']['publishedAt'], "%Y-%m-%dT%H:%M:%S.000Z")
-            if (datetime.now() - published_date).days > 7 or i > 50:
+            # A maximum of MAX_VIDEOS which are newer than 7 days will be shown
+            if (datetime.now() - published_date).days > 7 or i > self.MAX_VIDEOS:
                 break
             video_title = v['snippet']['title']
             container = SubElement(body, 'div', {'class': 'container'})

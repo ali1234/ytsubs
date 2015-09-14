@@ -46,7 +46,7 @@ def start(req):
     if not username:
         raise InputDataIncorrect('Specify the username with the \'user\' GET attribute.')
 
-    handling = Handler(directory, api_key, username)
+    handling = Handler(directory, api_key, username, 50)
     handling.add_to_watched(form.getfirst('watched'))
     handling.add_video(form.getfirst('add_video'))
     handling.save()

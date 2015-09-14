@@ -38,7 +38,7 @@ form = cgi.FieldStorage()
 username = form.getvalue('user')
 if not username:
     raise InputDataIncorrect('Specify the username with the \'user\' GET attribute.')
-handling = Handler(directory, api_key, username)
+handling = Handler(directory, api_key, username, 50)
 handling.add_to_watched(form.getvalue('watched'))
 handling.add_video(form.getvalue('add_video'))
 handling.save()
