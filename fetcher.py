@@ -159,7 +159,9 @@ class Fetcher:
 
     def query_video_information(self, video_id):
         url = self.baseurl + '/videos?part=snippet&id=' + video_id + '&key=' + self.API_KEY
-        response = urllib2.urlopen(url)
-        data = self._load_json(response)
-
-        return data['items'][0]
+        try:
+            response = urllib2.urlopen(url)
+            data = self._load_json(response)
+            return data['items'][0]
+        except:
+            raise InputDataIncorrect('The video you are trying to add does not exist')
