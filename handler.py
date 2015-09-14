@@ -28,6 +28,7 @@ from xml.dom import minidom
 from xml.etree.ElementTree import Element, SubElement, tostring
 from fetcher import Fetcher
 import cPickle
+import json
 
 
 class Handler:
@@ -36,97 +37,96 @@ class Handler:
         self.API_KEY = api_key
         self.USERNAME = username
 
-        self.DIRECTORY = directory
-        self.WATCHED_PATH = os.path.normpath(self.DIRECTORY + self.USERNAME.lower() + '_watchedVids.txt')
-        self.RAW_PATH = os.path.normpath(self.DIRECTORY + self.USERNAME.lower() + '_rawData.txt')
-        self.ADDITIONS_PATH = os.path.normpath(self.DIRECTORY + self.USERNAME.lower() + '_ownAdditions.txt')
-
+        self.SAVE_FILE_PATH = os.path.normpath(directory + 'ytsubs_' + self.USERNAME.lower() + '.json')
         self.fetcher = Fetcher(self.USERNAME, self.API_KEY)
 
         self.watched = []
-        self._get_watched()
-
         self.additions = []
-        self._get_additions()
-
         self.raw_videos = []
-        self._get_vids(False)
-
-    def _get_watched(self):
-        try:
-            with open(self.WATCHED_PATH, 'r') as watchedFile:
-                self.watched = cPickle.load(watchedFile)
-        except EOFError:
-            self.watched = []
-        except IOError:
-            open(self.WATCHED_PATH, 'wb').close()
-            self.watched = []
+        self.load()
 
     def add_to_watched(self, addition):
-        if addition is None:
-            return
-        if addition not in self.watched:
+        if addition is not None and addition not in self.watched:
             self.watched.append(addition)
-        with open(self.WATCHED_PATH, 'w') as watchedFile:
-            cPickle.dump(self.watched, watchedFile)
-        # A video marked as watched can safely be deleted from the local 'own additions'.
-        self._remove_from_additions(addition)
+            self.save()
+            # TODO Maybe add a data changed flag
+            # A video marked as watched can safely be deleted from the local 'own additions'.
+            self._remove_from_additions(addition)
 
     def _remove_from_watched(self, removal):
         if removal in self.watched:
             self.watched.remove(removal)
-        with open(self.WATCHED_PATH, 'w') as watchedFile:
-            cPickle.dump(self.watched, watchedFile)
+            # TODO Maybe add a data changed flag
 
-    def _get_vids(self, reload):
-        try:
-            with open(self.RAW_PATH, 'r') as rawFile:
-                videos = cPickle.load(rawFile)
-        except IOError:
-            videos = []
-
-        if reload:
-            videos = self.fetcher.get_subscriptions()
-            if videos:
-                with open(self.RAW_PATH, 'w') as rawFile:
-                    cPickle.dump(videos, rawFile)
+    def _get_vids(self):
+        videos = self.fetcher.get_subscriptions()
+        # TODO Maybe add a data changed flag
         self.raw_videos = videos
-
-    def _get_additions(self):
-        try:
-            with open(self.ADDITIONS_PATH, 'r') as additionFile:
-                ids = [line.strip() for line in additionFile]
-            self.additions = [self.fetcher.query_video_information(video_id) for video_id in ids] # TODO parallelize
-        except EOFError:
-            self.additions = []
-        except IOError:
-            open(self.ADDITIONS_PATH, 'wb').close()
-            self.additions = []
 
     # Adds a video with the id 'addition'
     def add_video(self, addition):
         # Write each video id in a separate line in a file
         if addition is not None and addition not in [add['id'] for add in self.additions]:
             self.additions.append(self.fetcher.query_video_information(addition))
-            with open(self.ADDITIONS_PATH, 'a') as additionFile:
-                additionFile.write(addition + os.linesep)
+            # TODO Maybe add a data changed flag
             # This ensures added videos to show up even if they have previously been marked as watched.
             self._remove_from_watched(addition)
 
     def _remove_from_additions(self, removal):
         # Check if the id for the video to be removed is in the 'own additions'.
-        if removal in [i['id'] for i in self.additions]:
-            # Actually remove it from the list.
-            self.additions = [i for i in self.additions if not i['id'] == removal]
-            with open(self.ADDITIONS_PATH, 'w') as additionFile:
-                for vid in self.additions:
-                    if len(vid['id']) > 0:
-                        additionFile.write("%s\n" % vid['id'])
+        # if removal in [i['id'] for i in self.additions]:
+        # Actually remove it from the list.
+        self.additions = [i for i in self.additions if not i['id'] == removal]
+        # TODO Maybe add a data changed flag
 
-    def update_videos(self, reload):
-        self._get_watched()
-        self._get_additions()
-        self._get_vids(reload)
+    def update_videos(self):
+        self._get_vids()
+        if reload:
+            self.save()
+
+    def save(self):
+        with open(self.SAVE_FILE_PATH, 'w') as save_file:
+            save_file.write(self.jsonize_data())
+
+    def load(self):
+        try:
+            with open(self.SAVE_FILE_PATH, 'r') as read_file:
+                data = json.load(read_file)
+        except IOError:
+            return
+
+        for type, list in data.iteritems():
+            if type == 'watched':
+                self.watched = [v['id'] for v in list]
+            elif type == 'additions':
+                self.additions = list
+            elif type == 'raw_videos':
+                self.raw_videos = list
+
+    def jsonize_data(self):
+        data = {}
+        data['watched'] = []
+        for id in self.watched:
+            if id is not None:
+                video = {}
+                video['id'] = id
+                data['watched'].append(video)
+
+        for type, list in {'additions': self.additions, 'raw_videos': [vid for vid in self.raw_videos if vid['id'] not in self.watched][:50]}.iteritems():
+            data[type] = []
+            for addition in list:
+                video = {}
+                video['id'] = addition['id']
+                video['snippet'] = {}
+                video['snippet']['title'] = addition['snippet']['title']
+                video['snippet']['publishedAt'] = addition['snippet']['publishedAt']
+                #video['snippet']['description'] = addition['snippet']['description']
+                video['snippet']['categoryId'] = addition['snippet']['categoryId']
+                video['snippet']['channelTitle'] = addition['snippet']['channelTitle']
+                video['snippet']['channelId'] = addition['snippet']['channelId']
+
+                data[type].append(video)
+        return json.dumps(data)
 
     def build_html(self):
         # Display the videos in a format similar to the YouTube feed.

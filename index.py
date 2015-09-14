@@ -41,6 +41,7 @@ if not username:
 handling = Handler(directory, api_key, username)
 handling.add_to_watched(form.getvalue('watched'))
 handling.add_video(form.getvalue('add_video'))
+handling.save()
 xmlstr = handling.build_html()
 
 f = sys.stdout
@@ -49,5 +50,6 @@ f.write('<!DOCTYPE html>')
 f.write(xmlstr)
 
 if not form.getvalue('watched'):
-    handling.update_videos(True)
+    handling.update_videos()
+    handling.save()
     print 'Refresh the page to see new videos.'
