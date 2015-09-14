@@ -31,7 +31,7 @@ from handler import Handler
 from fetcher import InputDataIncorrect
 
 cgitb.enable()
-directory = "c:/xampp/htdocs/ytsubs/"
+directory = "YOUR_SAVE_FILE_DIRECTORY"
 api_key = 'YOUR_API_KEY'
 
 form = cgi.FieldStorage()
