@@ -94,7 +94,7 @@ class Handler:
         try:
             with open(self.SAVE_FILE_PATH, 'r') as read_file:
                 data = json.load(read_file)
-        except IOError:
+        except (ValueError, IOError):
             return
 
         for type, list in data.iteritems():

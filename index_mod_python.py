@@ -54,4 +54,4 @@ def start(req):
 
     if not form.getfirst('watched'):
         handling.update_videos()
-        print 'Refresh the page to see new videos.'
+        req.write('Refresh the page to see new videos.')
