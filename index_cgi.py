@@ -31,7 +31,7 @@ from handler import Handler
 from fetcher import InputDataIncorrect
 
 cgitb.enable()
-directory = "YOUR_SAVE_FILE_DIRECTORY"
+directory = 'YOUR_SAVE_FILE_DIRECTORY'
 api_key = 'YOUR_API_KEY'
 
 form = cgi.FieldStorage()
@@ -51,5 +51,4 @@ f.write(xmlstr)
 
 if not form.getvalue('watched'):
     handling.update_videos()
-    handling.save()
     print 'Refresh the page to see new videos.'
