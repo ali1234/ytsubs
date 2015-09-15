@@ -29,6 +29,7 @@ from xml.etree.ElementTree import Element, SubElement, tostring
 from fetcher import Fetcher
 import cPickle
 import json
+import re
 
 
 class Handler:
@@ -119,15 +120,40 @@ class Handler:
                 video = {}
                 video['id'] = addition['id']
                 video['snippet'] = {}
+                video['contentDetails'] = {}
                 video['snippet']['title'] = addition['snippet']['title']
                 video['snippet']['publishedAt'] = addition['snippet']['publishedAt']
-                #video['snippet']['description'] = addition['snippet']['description']
+                video['contentDetails']['duration'] = addition['contentDetails']['duration']
                 video['snippet']['categoryId'] = addition['snippet']['categoryId']
                 video['snippet']['channelTitle'] = addition['snippet']['channelTitle']
                 video['snippet']['channelId'] = addition['snippet']['channelId']
 
                 data[type].append(video)
         return json.dumps(data)
+
+    def format_duration(self, duration_string):
+        reg_exp = re.compile(
+            'P'
+            '(?:T'
+            '(?:(?P<hours>\d+)H)?'
+            '(?:(?P<minutes>\d+)M)?'
+            '(?:(?P<seconds>\d+)S)?'
+            ')?'
+        )
+        duration = reg_exp.match(duration_string).groupdict()
+        duration_string = ""
+        if duration['hours'] is not None:
+            duration_string += repr(int(duration['hours'])) + ':'
+        if duration['minutes'] is not None:
+            duration_string += duration['minutes'] + ':'
+        else:
+            duration_string += '00:'
+        if duration['seconds'] is not None:
+            duration_string += duration['seconds']
+        else:
+            duration_string += '00'
+
+        return duration_string
 
     def build_html(self):
         # Display the videos in a format similar to the YouTube feed.
@@ -138,11 +164,15 @@ class Handler:
         style = SubElement(head, 'style')
         style.text = '.float_left { float: left; }' \
                      '.container { float: left; width: 196px; height: 200px; margin: 5px; }' \
-                     '.thumbnail_link { display: block; text-decoration: none}' \
+                     '.thumbnail_container { position: relative;  }' \
+                     '.thumbnail_link { display: block; text-decoration: none; }' \
                      '.thumbnail { display: block; width: 196px; height: 110px; }' \
                      '.block_clear { display: block; clear: both; }' \
                      '.watched { color: darkgrey;  font-style: italic; float: right; }' \
-                     '#header { margin: auto; width: 250px;}'
+                     '#header { margin: auto; width: 250px;}' \
+                     '.video-time { position: absolute; right: 2px; bottom: 2px; right: 2px;' \
+                     '              bottom: 2px; color: white; height: 14px; padding: 0 4px;' \
+                     '              line-height: 14px;opacity: .75; background-color: black; }'
 
         body = SubElement(html, 'body')
         header = SubElement(body, 'div', {'id': 'header'})
@@ -169,9 +199,11 @@ class Handler:
 
             link = SubElement(container, 'a',
                               {'href': 'http://youtube.com/watch?v=' + v['id'], 'class': 'thumbnail_link', 'title': video_title})
-
-            thumbnail = SubElement(link, 'img',
+            thumbnail_container = SubElement(link, 'div', {'class': 'thumbnail_container'})
+            thumbnail = SubElement(thumbnail_container, 'img',
                                    {'alt': v['snippet']['title'], 'src': 'http://i.ytimg.com/vi_webp/' + v['id'] + '/mqdefault.webp', 'class': 'thumbnail'})
+            video_time = SubElement(thumbnail_container, 'span', {'class': 'video-time'})
+            video_time.text = self.format_duration(v['contentDetails']['duration'])
 
             title = SubElement(link, 'span')
             title.text = video_title[:40] + (video_title[40:] and '...')

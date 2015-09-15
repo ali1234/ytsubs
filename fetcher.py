@@ -118,7 +118,7 @@ class Fetcher:
         # We first collect all the needed urls to do all the requests asynchronously later.
         urls = []
         for video_ids in self.chunks(allitems, 50):
-            urls.append(self.baseurl + '/videos?part=snippet&id=' + '%2C'.join(video_ids) + '&maxResults=50&key=' + self.API_KEY)
+            urls.append(self.baseurl + '/videos?part=snippet%2CcontentDetails&id=' + '%2C'.join(video_ids) + '&maxResults=50&fields=items(contentDetails%2Cid%2Ckind%2Csnippet)&key=' + self.API_KEY)
 
         videos = []
         with AsyncRequests() as request:
