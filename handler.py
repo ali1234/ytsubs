@@ -149,6 +149,8 @@ class Handler:
         else:
             duration_string += '00:'
         if duration['seconds'] is not None:
+            if int(duration['seconds']) < 10:
+                duration_string += '0'
             duration_string += duration['seconds']
         else:
             duration_string += '00'
