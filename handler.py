@@ -171,17 +171,26 @@ class Handler:
                      '.thumbnail { display: block; width: 196px; height: 110px; }' \
                      '.block_clear { display: block; clear: both; }' \
                      '.watched { color: darkgrey;  font-style: italic; float: right; }' \
-                     '#header { margin: auto; width: 250px;}' \
-                     '.video-time { position: absolute; right: 2px; bottom: 2px; right: 2px;' \
-                     '              bottom: 2px; color: white; height: 14px; padding: 0 4px;' \
-                     '              line-height: 14px;opacity: .75; background-color: black; }'
+                     '#header { margin: auto; width: 250px; }' \
+                     '.video-time { position: absolute; right: 2px; bottom: 2px; color: white; height: 1em;' \
+                     '              padding: 0 4px; line-height: 1em; opacity: .75; background-color: black; }' \
+                     '@media only screen and (max-device-width: 600px) {' \
+                     '    .thumbnail { display: block; width: 100%; height: auto; }' \
+                     '    .container { width: 100%; height: auto; margin: 0; padding: 1em; ' \
+                     '                 border-top: solid; border-top-color: lightgrey; }' \
+                     '    html { font-size: 3em; margin: 0; padding: 0;}' \
+                     '    input { font-size: 1em; height: 2em; }' \
+                     '    #header { margin: 1em; width: 100%; }' \
+                     '    #video_input { width: 80%; }' \
+                     '    #video_submit { width: 15%; }' \
+                     '}'
 
         body = SubElement(html, 'body')
         header = SubElement(body, 'div', {'id': 'header'})
         add_form = SubElement(header, 'form', {'method': 'get'})
-        input = SubElement(add_form, 'input', {'type': 'text', 'name': 'add_video', 'placeholder': 'Enter video URL'})
+        input = SubElement(add_form, 'input', {'type': 'text', 'name': 'add_video', 'placeholder': 'Enter video URL', 'id': 'video_input'})
         hidden = SubElement(add_form, 'input', {'type': 'hidden', 'name': 'user', 'value': self.USERNAME})
-        submit = SubElement(add_form, 'input', {'type': 'submit', 'value': 'Add'})
+        submit = SubElement(add_form, 'input', {'type': 'submit', 'value': 'Add', 'id': 'video_submit'})
 
         all_videos = self.additions + self.raw_videos
         if not all_videos:
