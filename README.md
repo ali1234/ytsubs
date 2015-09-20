@@ -9,6 +9,12 @@ For plain CGI use:
 or for MOD_PYTHON:
     
     localhost/index_mod_python.py?user=USERNAME
+    
+or start it by the command line:
+
+    python ytsubs.py YOUR_API_KEY USERNAME
+    
+Where a third argument the filename where you want to save the output.
 
 If you use your own framework use the following code snippet to generate a `Fetcher` Object and generate the HTML:
 

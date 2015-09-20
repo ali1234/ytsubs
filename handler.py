@@ -34,7 +34,7 @@ import re
 
 class Handler:
 
-    def __init__(self, directory, api_key, username, max_vids):
+    def __init__(self, directory, api_key, username, max_vids ):
         self.API_KEY = api_key
         self.USERNAME = username
 
@@ -122,6 +122,7 @@ class Handler:
                 video['snippet'] = {}
                 video['contentDetails'] = {}
                 video['snippet']['title'] = addition['snippet']['title']
+                #video['snippet']['description'] = addition['snippet']['description']
                 video['snippet']['publishedAt'] = addition['snippet']['publishedAt']
                 video['contentDetails']['duration'] = addition['contentDetails']['duration']
                 video['snippet']['categoryId'] = addition['snippet']['categoryId']
@@ -227,4 +228,45 @@ class Handler:
 
         reload_button = SubElement(body, 'a', {'href': '?user=' + self.USERNAME, 'class': 'block_clear'})
         reload_button.text = 'Reload'
-        return minidom.parseString(tostring(html)).toprettyxml(indent="   ").encode('utf-8')
+        htmlstr = minidom.parseString(tostring(html)).toprettyxml(indent="   ").encode('utf-8')
+        return '<!DOCTYPE html>\n' + htmlstr
+
+    def build_rss(self):
+        rss = Element('rss')
+        rss.attrib['version'] = '2.0'
+        channel = SubElement(rss, 'channel')
+        title = SubElement(channel, 'title')
+        title.text = 'Youtube subscriptions for ' + self.USERNAME
+        link = SubElement(channel, 'link')
+        link.text = 'http://www.youtube.com/'
+
+
+        all_videos = self.additions + self.raw_videos
+        if not all_videos:
+            return False
+        all_videos = [v for v in all_videos if v['id'] not in self.watched]
+        i = 0
+        for v in all_videos:
+            i+=1
+            published_date = datetime.strptime(v['snippet']['publishedAt'], "%Y-%m-%dT%H:%M:%S.000Z")
+            # A maximum of MAX_VIDEOS which are newer than 7 days will be shown
+            if (datetime.now() - published_date).days > 7 or i > self.MAX_VIDEOS:
+                break
+
+            item = SubElement(channel, 'item')
+            title = SubElement(item, 'title')
+            title.text = v['snippet']['title']
+            link = SubElement(item, 'link')
+            link.text = 'http://youtube.com/watch?v=' + v['id']
+            author = SubElement(item, 'author')
+            author.text = v['snippet']['channelTitle']
+            guid = SubElement(item, 'guid')
+            guid.attrib['isPermaLink'] = 'true'
+            guid.text = 'http://youtube.com/watch?v=' + v['id']
+            pubDate = SubElement(item, 'pubDate')
+            pubDate.text = v['snippet']['publishedAt']
+            #description = SubElement(item, 'description')
+            #description.text = v['snippet']['description']
+
+        xmlstr = minidom.parseString(tostring(rss)).toprettyxml(indent="   ").encode('utf-8')
+        return '<?xml version="1.0" encoding="UTF-8" ?>\n' + xmlstr
