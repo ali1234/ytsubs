@@ -39,14 +39,8 @@ if not my_key:
   sys.exit(-1)
 
 if not len(sys.argv) >= 2:
-  print "username and (optionally) destination file must be specified as first and second arguments."
+  print "channel ID and (optionally) destination file must be specified as first and second arguments."
   sys.exit(-1)
-
-def get_channel_for_user(user):
-    url = baseurl + '/channels?part=id&forUsername='+ user + '&key=' + my_key
-    response = urllib2.urlopen(url)
-    data = json.load(response)
-    return data['items'][0]['id']
 
 def get_playlists(channel):
     playlists = []
@@ -113,11 +107,10 @@ def chunks(l, n):
         yield l[i:i+n]
 
 def do_it():
-
-    username = sys.argv[1]
+    channel_id = sys.argv[1]
 
     # get all upload playlists of subbed channels
-    playlists = get_playlists(get_channel_for_user(username))
+    playlists = get_playlists(channel_id)
 
     # get the last 5 items from every playlist
     allitems = []
@@ -139,7 +132,7 @@ def do_it():
     rss.attrib['version'] = '2.0'
     channel = SubElement(rss, 'channel')
     title = SubElement(channel, 'title')
-    title.text = 'Youtube subscriptions for ' + username
+    title.text = 'Youtube subscriptions'
     link = SubElement(channel, 'link')
     link.text = 'http://www.youtube.com/'
 

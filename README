@@ -1,7 +1,7 @@
 This python script will fetch the latest subscription videos for a 
-named Youtube user. Usage:
+named Youtube channel. Usage:
 
-    YOUTUBE_SERVER_API_KEY="<your_secret_key>" ./ytsubs.py <username> <output RSS file>
+    YOUTUBE_SERVER_API_KEY="<your_secret_key>" ./ytsubs.py <channel_id> <output RSS file>
 
 I recommend to put this into a cronjob so that it will only update
 hourly due to the extreme inefficiency of the V3 API (see below).
