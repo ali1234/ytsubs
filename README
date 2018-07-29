@@ -37,3 +37,8 @@ it on http:// or you won't get this option. You can of course run a
 tiny local webserver for this purpose.
 
 See: https://bugzilla.mozilla.org/show_bug.cgi?id=1008788
+
+Now that live bookmarks are being removed from Firefox core, I
+recommend this add-on to replace them:
+
+https://addons.mozilla.org/en-GB/firefox/addon/livemarks/
