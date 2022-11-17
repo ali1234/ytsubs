@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (C) 2014 Alistair Buxton <a.j.buxton@gmail.com>
 #
