@@ -23,9 +23,9 @@
 # OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-import urllib2
+import urllib.request
+import urllib.error
 import json
-import itertools
 import os
 import sys
 from xml.etree.ElementTree import Element, SubElement, Comment, tostring
@@ -35,16 +35,16 @@ my_key = os.environ.get('YOUTUBE_SERVER_API_KEY')
 
 # check for missing inputs
 if not my_key:
-  print "YOUTUBE_SERVER_API_KEY variable missing."
+  print("YOUTUBE_SERVER_API_KEY variable missing.")
   sys.exit(-1)
 
 if not len(sys.argv) >= 2:
-  print "username and (optionally) destination file must be specified as first and second arguments."
+  print("username and (optionally) destination file must be specified as first and second arguments.")
   sys.exit(-1)
 
 def get_channel_for_user(user):
     url = baseurl + '/channels?part=id&forUsername='+ user + '&key=' + my_key
-    response = urllib2.urlopen(url)
+    response = urllib.request.urlopen(url)
     data = json.load(response)
     return data['items'][0]['id']
 
@@ -59,7 +59,7 @@ def get_playlists(channel):
     while True:
         # we are limited to 50 results. if the user subscribed to more than 50 channels
         # we have to make multiple requests here.
-        response = urllib2.urlopen(url+next_page)
+        response = urllib.request.urlopen(url+next_page)
         data = json.load(response)
         subs = []
         for i in data['items']:
@@ -69,7 +69,7 @@ def get_playlists(channel):
         # actually getting the channel uploads requires knowing the upload playlist ID, which means
         # another request. luckily we can bulk these 50 at a time.
         purl = baseurl + '/channels?part=contentDetails&id='+ '%2C'.join(subs) + '&maxResults=50&key=' + my_key
-        response = urllib2.urlopen(purl)
+        response = urllib.request.urlopen(purl)
         data2 = json.load(response)
         for i in data2['items']:
             try:
@@ -90,7 +90,7 @@ def get_playlist_items(playlist):
     if playlist:
         # get the last 5 videos uploaded to the playlist
         url = baseurl + '/playlistItems?part=contentDetails&playlistId='+ playlist + '&maxResults=5&key=' + my_key
-        response = urllib2.urlopen(url)
+        response = urllib.request.urlopen(url)
         data = json.load(response)    
         for i in data['items']:
             if i['kind'] == 'youtube#playlistItem':
@@ -101,7 +101,7 @@ def get_playlist_items(playlist):
 def get_real_videos(video_ids):
     videos = []
     purl = baseurl + '/videos?part=snippet&id='+ '%2C'.join(video_ids) + '&maxResults=50&key=' + my_key
-    response = urllib2.urlopen(purl)
+    response = urllib.request.urlopen(purl)
     data = json.load(response)
 
     return data['items']
@@ -109,7 +109,7 @@ def get_real_videos(video_ids):
 def chunks(l, n):
     """ Yield successive n-sized chunks from l.
     """
-    for i in xrange(0, len(l), n):
+    for i in range(0, len(l), n):
         yield l[i:i+n]
 
 def do_it():
@@ -122,7 +122,12 @@ def do_it():
     # get the last 5 items from every playlist
     allitems = []
     for p in playlists:
-        allitems.extend(get_playlist_items(p))
+        try:
+            allitems.extend(get_playlist_items(p))
+        except urllib.error.HTTPError as error:
+            if error.code == 404:
+                continue
+            raise error
 
     # the playlist items don't contain the correct published date, so now
     # we have to fetch every video in batches of 50.
@@ -167,7 +172,7 @@ def do_it():
         f = sys.stdout
 
     f.write('<?xml version="1.0" encoding="UTF-8" ?>')
-    f.write(tostring(rss).encode('utf-8'))
+    f.write(tostring(rss).decode('utf-8'))
     f.close()
 
 
@@ -176,7 +181,7 @@ if __name__ == '__main__':
     for i in range(3):
         try:
             do_it()
-        except urllib2.HTTPError, error:
+        except urllib.error.HTTPError as error:
             if error.code == 500:
                 continue
             raise error
