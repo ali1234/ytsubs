@@ -27,9 +27,8 @@ the actual videos - THEN it makes another API call for each 50 videos
 to get the real publication time.
 
 If you have 100 subscriptions this script will use
-around 500 API "units" each time you call it. You are allowed to use
-50,000,000 units per day so you should not run into the limits
-if you are only updating hourly, even if you have thousands of subs.
+around 500 API "units" each time you call it. Youtube has massively
+restricted the free quota, but it should still be plenty.
 
 Note that due to a bug in Firefox, you can't directly open the output
 file with a file:// URL and create a live bookmark. You have to serve
